@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const { registerUser, loginUser, viewProfile,deleteMyAccount } = require('../controllers/userController')
+const { registerUser, loginUser,verifyEmail, viewProfile,deleteMyAccount } = require('../controllers/userController')
 const validateToken = require('../middleware/authMiddleware')
 
 // middleware that is specific to this router
@@ -14,6 +14,9 @@ router.post('/register', registerUser)
 
 // Login user
 router.post('/login', loginUser)
+
+// Email Verification
+router.get('/verify-email', verifyEmail); 
 
 //middleware to validate token
 router.use(validateToken)
