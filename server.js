@@ -11,6 +11,9 @@ connectDB();
 const user = require("./routes/user");
 app.use("/user", user);
 
+const auth = require("./routes/auth");
+app.use("/auth", auth);
+
 // load product routes
 app.use("/product", require("./routes/product"));
 
