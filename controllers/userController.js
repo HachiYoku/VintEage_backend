@@ -2,26 +2,28 @@ const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-
 const registerUser = async (req, res) => {
   const { username, email, password } = req.body;
+
   if (!username || !email || !password) {
     return res.status(400).json({ message: "Please fill all fields" });
   }
 
-  //check if user exists
-  const exitUser = await User.findOne({ email });
-  if (exitUser) {
+  const existUser = await User.findOne({ email });
+  if (existUser) {
     return res.status(400).json({ message: "User already exists" });
   }
 
-  //create user
   const salt = bcrypt.genSaltSync(10);
   const hashPassword = bcrypt.hashSync(password, salt);
-  const user = await User.create({ username, email, password: hashPassword });
-  return res.status(201).json(user);
 
-  res.json({ message: "register user" });
+  const user = await User.create({
+    username,
+    email,
+    password: hashPassword,
+  });
+
+  return res.status(201).json(user);
 };
 
 const loginUser = async (req, res) => {
@@ -33,11 +35,9 @@ const loginUser = async (req, res) => {
   const user = await User.findOne({ email });
 
   if (user && bcrypt.compareSync(password, user.password)) {
-    const accessToken = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "3m" },
-    );
+    const accessToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "3m",
+    });
     return res.status(200).json({ accessToken });
   }
 
@@ -88,6 +88,4 @@ const deleteMyAccount = async (req, res) => {
   }
 };
 
-
-module.exports = {registerUser,loginUser,viewProfile,deleteMyAccount
-};
+module.exports = { registerUser, loginUser, viewProfile, deleteMyAccount };

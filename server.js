@@ -1,0 +1,23 @@
+require("dotenv").config();
+const express = require("express");
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.use(express.json());
+
+const connectDB = require("./config/dbConnection");
+connectDB();
+
+const user = require("./routes/user");
+app.use("/user", user);
+
+// load product routes
+app.use("/product", require("./routes/product"));
+
+app.get("/", (req, res) => {
+  res.send("Hello World!");
+});
+
+app.listen(port, () => {
+  console.log(`Example app listening on port ${port}`);
+});
