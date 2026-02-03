@@ -15,7 +15,12 @@ const auth = require("./routes/auth");
 app.use("/auth", auth);
 
 // load product routes
-app.use("/product", require("./routes/product"));
+const product = require("./routes/product");
+app.use("/product", product);
+
+// load order routes
+const order = require("./routes/order");
+app.use("/order", order);
 
 app.get("/", (req, res) => {
   res.send("Hello World!");

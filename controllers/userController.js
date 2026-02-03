@@ -24,7 +24,8 @@ const registerUser = async (req, res) => {
     username,
     email,
     password: hashedPassword,
-    verificationToken,
+    verificationToken: verificationToken,
+    verificationTokenExpires: Date.now() + 1000 * 60 * 60, // 1 hour,
   });
 
   const verifyLink = `http://localhost:3000/user/verify-email?token=${verificationToken}`;
@@ -74,17 +75,21 @@ const loginUser = async (req, res) => {
 const verifyEmail = async (req, res) => {
   const { token } = req.query;
 
-  const user = await User.findOne({ verificationToken: token });
+  const user = await User.findOne({
+    verificationToken: token,
+    verificationTokenExpires: { $gt: Date.now() },
+  });
 
   if (!user) {
-    return res.status(400).send("Invalid or expired link");
+    return res
+      .status(400)
+      .json({ message: "Verification link is invalid or expired" });
   }
 
   user.isVerified = true;
   user.verificationToken = undefined;
   await user.save();
 
-  
   return res.status(200).json({ message: "Email verified successfully" });
 };
 
@@ -130,4 +135,10 @@ const deleteMyAccount = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, loginUser, verifyEmail, viewProfile, deleteMyAccount };
+module.exports = {
+  registerUser,
+  loginUser,
+  verifyEmail,
+  viewProfile,
+  deleteMyAccount,
+};
