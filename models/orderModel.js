@@ -21,6 +21,8 @@ const orderSchema = new mongoose.Schema(
           ref: "Product",
           required: true,
         },
+        title: String, 
+        image: String, 
         quantity: {
           type: Number,
           required: true,
@@ -44,7 +46,7 @@ const orderSchema = new mongoose.Schema(
       default: "pending",
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 module.exports = mongoose.model("Order", orderSchema);

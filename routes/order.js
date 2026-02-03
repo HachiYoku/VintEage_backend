@@ -3,11 +3,14 @@ const router = express.Router();
 const {
   createOrder,
   getItemsIBuy,
-  getItemsISell,}= require('../controllers/orderController');
+  getItemsISell,checkoutCart}= require('../controllers/orderController');
 const validateToken = require('../middleware/authMiddleware');
 
 // Create a new order
 router.post('/', validateToken, createOrder);
+
+// Checkout cart (selected items or all items)
+router.post('/checkout', validateToken, checkoutCart);
 
 // Get items I buy
 router.get('/buy', validateToken, getItemsIBuy);
