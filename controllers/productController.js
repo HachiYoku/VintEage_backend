@@ -1,4 +1,5 @@
 const Product = require("../models/productModel");
+const { uploadStream } = require("../utils/uploadStream");
 
 // Create Product
 const createProduct = async (req, res) => {
@@ -11,8 +12,17 @@ const createProduct = async (req, res) => {
       currency,
       quantity,
       condition,
-      image,
     } = req.body;
+
+    let imageUrl = req.body.image;
+    let imagePublicId = undefined;
+
+    // if a file was uploaded (multer memoryStorage), upload to Cloudinary
+    if (req.file && req.file.buffer) {
+      const result = await uploadStream(req.file.buffer);
+      imageUrl = result.secure_url;
+      imagePublicId = result.public_id;
+    }
 
     const product = await Product.create({
       title,
@@ -22,7 +32,8 @@ const createProduct = async (req, res) => {
       currency,
       quantity,
       condition,
-      image,
+      image: imageUrl,
+      imagePublicId,
       user: req.user.id, // from JWT middleware
     });
 
@@ -65,6 +76,26 @@ const updateProduct = async (req, res) => {
       return res
         .status(403)
         .json({ message: "Not authorized to update this product" });
+
+    // handle image replacement
+    if (req.file && req.file.buffer) {
+      // upload new image
+      const result = await uploadStream(req.file.buffer);
+
+      // delete old image from Cloudinary if exists
+      if (product.imagePublicId) {
+        try {
+          const cloudinary = require('../config/cloudinary');
+          await cloudinary.uploader.destroy(product.imagePublicId);
+        } catch (e) {
+          // log and continue; don't fail update due to delete error
+          console.error('Cloudinary delete failed:', e.message);
+        }
+      }
+
+      product.image = result.secure_url;
+      product.imagePublicId = result.public_id;
+    }
 
     Object.assign(product, req.body);
     await product.save();

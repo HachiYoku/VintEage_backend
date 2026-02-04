@@ -9,6 +9,9 @@ const {
 } = require("../controllers/productController");
 
 const validateToken = require("../middleware/authMiddleware");
+const multer = require('multer');
+const storage = multer.memoryStorage();
+const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } }); // 5MB
 
 // Public route to get all products
 router.get("/", getProducts);
@@ -17,8 +20,8 @@ router.get("/", getProducts);
 router.get("/:id", getProduct);
 
 // Protected routes
-router.post("/", validateToken, createProduct);
-router.put("/:id", validateToken, updateProduct);
+router.post("/", validateToken, upload.single('image'), createProduct);
+router.put("/:id", validateToken, upload.single('image'), updateProduct);
 router.delete("/:id", validateToken, deleteProduct);
 
 module.exports = router;

@@ -9,7 +9,8 @@ const productSchema = new mongoose.Schema(
     currency: { type: String, default: "MMK" },
     quantity: { type: Number, default: 1 },
     condition: { type: String, default: "Brand New" },
-    image: { type: String }, // store base64 or URL
+    image: { type: String }, // secure url from Cloudinary
+    imagePublicId: { type: String }, // cloudinary public id for deletions/updates
     type: { type: String, default: "sell" },
     date: { type: Date, default: Date.now },
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // owner
