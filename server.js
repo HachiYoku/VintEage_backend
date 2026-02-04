@@ -22,6 +22,9 @@ app.use("/product", product);
 const order = require("./routes/order");
 app.use("/order", order);
 
+const cartRoutes = require("./routes/cart");
+app.use("/cart", cartRoutes);
+
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
