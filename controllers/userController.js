@@ -5,46 +5,56 @@ const jwt = require("jsonwebtoken");
 const sendEmail = require("../utils/sendEmail");
 
 const registerUser = async (req, res) => {
-  const { username, email, password } = req.body;
+  try {
+    const { username, email, password } = req.body;
 
-  if (!username || !email || !password) {
-    return res.status(400).json({ message: "Please fill all fields" });
+    if (!username || !email || !password) {
+      return res.status(400).json({ message: "Please fill all fields" });
+    }
+
+    const existUser = await User.findOne({ email });
+    if (existUser) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    const hashedPassword = bcrypt.hashSync(password, 10);
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+
+    // Create user
+    await User.create({
+      username,
+      email,
+      password: hashedPassword,
+      verificationToken,
+      verificationTokenExpires: Date.now() + 1000 * 60 * 60, // 1 hour
+      isVerified: false,
+    });
+
+    // Build verify link
+    const verifyLink = `${process.env.FRONTEND_URL || "https://vintedge-api.onrender.com/"}/user/verify-email?token=${verificationToken}`;
+
+    try {
+      await sendEmail(
+        email,
+        "Verify your email",
+        `
+          <h3>Welcome!</h3>
+          <p>Click the link below to verify your email:</p>
+          <a href="${verifyLink}">Verify Email</a>
+        `,
+      );
+    } catch (emailError) {
+      console.warn("Email failed but user registered:", emailError.message);
+    }
+
+    // 4️⃣ Always return success
+    return res.status(201).json({
+      message: "Registration successful. Please verify your email.",
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
-
-  const existUser = await User.findOne({ email });
-  if (existUser) {
-    return res.status(400).json({ message: "User already exists" });
-  }
-
-  const hashedPassword = bcrypt.hashSync(password, 10);
-
-  const verificationToken = crypto.randomBytes(32).toString("hex");
-
-  await User.create({
-    username,
-    email,
-    password: hashedPassword,
-    verificationToken: verificationToken,
-    verificationTokenExpires: Date.now() + 1000 * 60 * 60, // 1 hour,
-  });
-
-  const verifyLink = `http://localhost:3000/user/verify-email?token=${verificationToken}`;
-
-  await sendEmail(
-    email,
-    "Verify your email",
-    `
-      <h3>Welcome!</h3>
-      <p>Click the link below to verify your email:</p>
-      <a href="${verifyLink}">Verify Email</a>
-    `,
-  );
-
-  return res.status(201).json({
-    message: "Registration successful. Please check your email to verify.",
-  });
 };
-
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
