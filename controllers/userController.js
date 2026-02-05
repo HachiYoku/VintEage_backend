@@ -31,7 +31,7 @@ const registerUser = async (req, res) => {
     });
 
     // Build verify link
-    const verifyLink = `${process.env.FRONTEND_URL || "https://vintedge-api.onrender.com/"}/user/verify-email?token=${verificationToken}`;
+    const verifyLink = `${process.env.FRONTEND_URL || "https://vintedge-api.onrender.com"}/user/verify-email?token=${verificationToken}`;
 
     try {
       await sendEmail(
