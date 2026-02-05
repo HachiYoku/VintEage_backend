@@ -78,6 +78,8 @@ const updateProduct = async (req, res) => {
         .json({ message: "Not authorized to update this product" });
 
     // handle image replacement
+    let updatedData = { ...req.body };
+
     if (req.file && req.file.buffer) {
       // upload new image
       const result = await uploadStream(req.file.buffer);
@@ -95,9 +97,16 @@ const updateProduct = async (req, res) => {
 
       product.image = result.secure_url;
       product.imagePublicId = result.public_id;
+      // ensure image fields in updatedData reflect new upload
+      updatedData.image = result.secure_url;
+      updatedData.imagePublicId = result.public_id;
+    } else {
+      // If no new file uploaded, avoid overwriting existing image fields
+      if ('image' in updatedData) delete updatedData.image;
+      if ('imagePublicId' in updatedData) delete updatedData.imagePublicId;
     }
 
-    Object.assign(product, req.body);
+    Object.assign(product, updatedData);
     await product.save();
 
     return res.status(200).json(product);
