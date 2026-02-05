@@ -12,11 +12,11 @@ router.use((req, res, next) => {
 // Register new user
 router.post('/register', registerUser)
 
-// Login user
-router.post('/login', loginUser)
-
 // Email Verification
 router.get('/verify-email', verifyEmail); 
+
+// Login user
+router.post('/login', loginUser)
 
 //middleware to validate token
 router.use(validateToken)

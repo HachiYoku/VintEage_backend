@@ -29,9 +29,9 @@ const registerUser = async (req, res) => {
       verificationTokenExpires: Date.now() + 1000 * 60 * 60, // 1 hour
       isVerified: false,
     });
-
+    
     // Build verify link
-    const verifyLink = `${process.env.FRONTEND_URL || "https://vintedge-api.onrender.com"}/user/verify-email?token=${verificationToken}`;
+     const verifyLink = `${process.env.FRONTEND_URL || "https://vintedge-api.onrender.com"}/user/verify-email?token=${verificationToken}`;
 
     try {
       await sendEmail(
@@ -55,6 +55,47 @@ const registerUser = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
+
+const verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.query;
+
+    // Check if token exists
+    if (!token) {
+      return res.status(400).json({ message: "Verification token is missing" });
+    }
+
+    console.log("Token received:", token);
+
+    const user = await User.findOne({
+      verificationToken: token,
+      verificationTokenExpires: { $gt: Date.now() },
+    });
+    console.log("User found:", user);
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid verification token" });
+    }
+
+    if (user.verificationTokenExpires < Date.now()) {
+      return res.status(400).json({ message: "Verification token expired" });
+    }
+
+    if (user.isVerified) {
+      return res.status(400).json({ message: "Email already verified" });
+    }
+
+    user.isVerified = true;
+    user.verificationToken = undefined;
+    user.verificationTokenExpires = undefined;
+    await user.save();
+
+    return res.status(200).json({ message: "Email verified successfully" });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
@@ -80,27 +121,6 @@ const loginUser = async (req, res) => {
   });
 
   res.json({ accessToken: token });
-};
-
-const verifyEmail = async (req, res) => {
-  const { token } = req.query;
-
-  const user = await User.findOne({ verificationToken: token });
-
-  if (!user) {
-    return res.status(400).json({ message: "Invalid verification token" });
-  }
-
-  if (user.verificationTokenExpires < Date.now()) {
-    return res.status(400).json({ message: "Verification token expired" });
-  }
-
-  user.isVerified = true;
-  user.verificationToken = undefined;
-  user.verificationTokenExpires = undefined;
-  await user.save();
-
-  return res.status(200).json({ message: "Email verified successfully" });
 };
 
 const viewProfile = async (req, res) => {
