@@ -85,19 +85,19 @@ const loginUser = async (req, res) => {
 const verifyEmail = async (req, res) => {
   const { token } = req.query;
 
-  const user = await User.findOne({
-    verificationToken: token,
-    verificationTokenExpires: { $gt: Date.now() },
-  });
+  const user = await User.findOne({ verificationToken: token });
 
   if (!user) {
-    return res
-      .status(400)
-      .json({ message: "Verification link is invalid or expired" });
+    return res.status(400).json({ message: "Invalid verification token" });
+  }
+
+  if (user.verificationTokenExpires < Date.now()) {
+    return res.status(400).json({ message: "Verification token expired" });
   }
 
   user.isVerified = true;
   user.verificationToken = undefined;
+  user.verificationTokenExpires = undefined;
   await user.save();
 
   return res.status(200).json({ message: "Email verified successfully" });
