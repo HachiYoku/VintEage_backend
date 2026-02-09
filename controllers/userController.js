@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const sendEmail = require("../utils/sendEmail");
+const { uploadStream } = require("../utils/uploadStream");
 
 const registerUser = async (req, res) => {
   try {
@@ -31,7 +32,9 @@ const registerUser = async (req, res) => {
     });
     
     // Build verify link
-     const verifyLink = `${process.env.FRONTEND_URL || "https://vintedge-api.onrender.com"}/user/verify-email?token=${verificationToken}`;
+    const verifyLink = `${
+      process.env.FRONTEND_URL || "http://localhost:5173"
+    }/verify-email?token=${verificationToken}`;
 
     try {
       await sendEmail(
@@ -165,10 +168,33 @@ const deleteMyAccount = async (req, res) => {
   }
 };
 
+const updateProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const { username } = req.body;
+    if (username) user.username = username;
+
+    if (req.file && req.file.buffer) {
+      const result = await uploadStream(req.file.buffer, "vintedge/avatars");
+      user.avatar = result.secure_url;
+      user.avatarPublicId = result.public_id;
+    }
+
+    await user.save();
+    const updated = await User.findById(req.user.id).select("-password");
+    return res.status(200).json(updated);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
   verifyEmail,
   viewProfile,
   deleteMyAccount,
+  updateProfile,
 };

@@ -14,6 +14,8 @@ const userSchema = new mongoose.Schema(
     isVerified: { type: Boolean, default: false },
     verificationToken: { type: String },
     verificationTokenExpires: Date,
+    avatar: { type: String },
+    avatarPublicId: { type: String },
 
     resetToken: {
       type: String,
