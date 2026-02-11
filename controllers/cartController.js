@@ -25,6 +25,11 @@ const addToCart = async (req, res) => {
 
     const product = await Product.findById(productId);
     if (!product) return res.status(404).json({ message: "Product not found" });
+    if (product.user?.toString() === req.user.id) {
+      return res
+        .status(403)
+        .json({ message: "You cannot add your own product to the cart" });
+    }
 
     let cart = await Cart.findOne({ user: req.user.id });
     const existingQty = cart
