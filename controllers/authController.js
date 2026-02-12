@@ -76,10 +76,7 @@ const resetPassword = async (req, res) => {
         .json({ message: "Token is invalid or has expired" });
     }
     // Hash the new password
-    const hashedPassword = await bcrypt.hashSync(
-      password,
-      bcrypt.genSaltSync(20),
-    );
+    const hashedPassword = bcrypt.hashSync(password, 10);
 
     // Update user with new password and clear reset token fields
     user.password = hashedPassword;
