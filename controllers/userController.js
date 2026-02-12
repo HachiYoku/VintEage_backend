@@ -20,34 +20,27 @@ const registerUser = async (req, res) => {
     const hashedPassword = bcrypt.hashSync(password, 10);
     const verificationToken = crypto.randomBytes(32).toString("hex");
 
-    // Create user
     await User.create({
       username,
       email,
       password: hashedPassword,
       verificationToken,
-      verificationTokenExpires: Date.now() + 1000 * 60 * 60, // 1 hour
+      verificationTokenExpires: Date.now() + 1000 * 60 * 60,
       isVerified: false,
     });
-    
-    // Build verify link
-     const verifyLink = `${process.env.FRONTEND_URL || "https://vintedge-api.onrender.com"}/user/verify-email?token=${verificationToken}`;
 
-    try {
-      await sendEmail(
-        email,
-        "Verify your email",
-        `
-          <h3>Welcome!</h3>
-          <p>Click the link below to verify your email:</p>
-          <a href="${verifyLink}">Verify Email</a>
-        `,
-      );
-    } catch (emailError) {
-      console.warn("Email failed but user registered:", emailError.message);
-    }
+    const verifyLink = `${process.env.BACKEND_URL}/user/verify-email?token=${verificationToken}`;
 
-    // 4️⃣ Always return success
+    await sendEmail(
+      email,
+      "Verify your email",
+      `
+        <h3>Welcome!</h3>
+        <p>Click the link below to verify your email:</p>
+        <a href="${verifyLink}">Verify Email</a>
+      `,
+    );
+
     return res.status(201).json({
       message: "Registration successful. Please verify your email.",
     });
@@ -60,29 +53,21 @@ const verifyEmail = async (req, res) => {
   try {
     const { token } = req.query;
 
-    // Check if token exists
     if (!token) {
-      return res.status(400).json({ message: "Verification token is missing" });
+      return res.redirect(`${process.env.FRONTEND_URL}/verify-failed`);
     }
-
-    console.log("Token received:", token);
 
     const user = await User.findOne({
       verificationToken: token,
       verificationTokenExpires: { $gt: Date.now() },
     });
-    console.log("User found:", user);
 
     if (!user) {
-      return res.status(400).json({ message: "Invalid verification token" });
-    }
-
-    if (user.verificationTokenExpires < Date.now()) {
-      return res.status(400).json({ message: "Verification token expired" });
+      return res.redirect(`${process.env.FRONTEND_URL}/verify-failed`);
     }
 
     if (user.isVerified) {
-      return res.status(400).json({ message: "Email already verified" });
+      return res.redirect(`${process.env.FRONTEND_URL}/verify-success`);
     }
 
     user.isVerified = true;
@@ -90,9 +75,9 @@ const verifyEmail = async (req, res) => {
     user.verificationTokenExpires = undefined;
     await user.save();
 
-    return res.status(200).json({ message: "Email verified successfully" });
+    return res.redirect(`${process.env.FRONTEND_URL}/verify-success`);
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.redirect(`${process.env.FRONTEND_URL}/verify-failed`);
   }
 };
 
@@ -102,7 +87,7 @@ const loginUser = async (req, res) => {
   const user = await User.findOne({ email });
 
   if (!user) {
-    return res.status(400).json({ message: "Account doesn't exist" });
+    return res.status(400).json({ message: "Invalid credentials" });
   }
 
   if (!user.isVerified) {
@@ -120,7 +105,14 @@ const loginUser = async (req, res) => {
     expiresIn: "1h",
   });
 
-  res.json({ accessToken: token });
+  res.json({
+    accessToken: token,
+    user: {
+      id: user._id,
+      username: user.username,
+      email: user.email,
+    },
+  });
 };
 
 const viewProfile = async (req, res) => {

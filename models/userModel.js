@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema(
     },
     password: { type: String, required: true },
     isVerified: { type: Boolean, default: false },
+
     verificationToken: { type: String },
     verificationTokenExpires: Date,
 
@@ -22,7 +23,7 @@ const userSchema = new mongoose.Schema(
       type: Date,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 module.exports = mongoose.model("User", userSchema);
