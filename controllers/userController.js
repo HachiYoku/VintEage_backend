@@ -31,8 +31,9 @@ const registerUser = async (req, res) => {
       isVerified: false,
     });
     
-    // Build verify link
-    const verifyLink = `https://vintedge-api.onrender.com/user/verify-email?token=${verificationToken}`;
+    // Build verify link (frontend handles verification flow)
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const verifyLink = `${frontendUrl}/verify-email?token=${verificationToken}`;
 
     try {
       await sendEmail(
@@ -91,7 +92,7 @@ const verifyEmail = async (req, res) => {
     user.verificationTokenExpires = undefined;
     await user.save();
 
-    return res.redirect("https://vint-edge.vercel.app/login");
+    return res.status(200).json({ message: "Email verified successfully" });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
