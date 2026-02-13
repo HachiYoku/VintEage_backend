@@ -18,6 +18,11 @@ const createOrder = async (req, res) => {
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
+    if (product.user?.toString() === req.user.id) {
+      return res.status(403).json({
+        message: "You cannot buy your own product",
+      });
+    }
 
     const order = await Order.create({
       buyer: req.user.id,
@@ -86,6 +91,14 @@ const checkoutCart = async (req, res) => {
 
     if (itemsToCheckout.length === 0) {
       return res.status(400).json({ message: "No matching items" });
+    }
+    const ownItems = itemsToCheckout.filter(
+      (i) => i.product.user?.toString() === req.user.id
+    );
+    if (ownItems.length > 0) {
+      return res.status(403).json({
+        message: "You cannot buy your own product",
+      });
     }
 
     // 3. Decrease stock (remember what we changed)

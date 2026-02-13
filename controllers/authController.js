@@ -26,7 +26,10 @@ const forgotPassword = async (req, res) => {
       return res.status(400).json({ message: "Email is required" });
     }
     const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) {
+      // Avoid account enumeration; still respond OK
+      return res.json({ message: "Password reset link sent to your email" });
+    }
     // Generate token
     const resetToken = crypto.randomBytes(20).toString("hex");
     const resetTokenExpire = Date.now() + 15 * 60 * 1000; // 15 mins
@@ -36,7 +39,9 @@ const forgotPassword = async (req, res) => {
     await user.save();
 
     // Send email
-    const resetLink = `${process.env.BASE_URL}/auth/reset-password/${resetToken}`;
+    const resetLink = `${
+      process.env.FRONTEND_URL || "http://localhost:5173"
+    }/reset-password/${resetToken}`;
     const html = `
       <h3>Password Reset Request</h3>
       <p>Click the link below to reset your password:</p>
@@ -71,10 +76,7 @@ const resetPassword = async (req, res) => {
         .json({ message: "Token is invalid or has expired" });
     }
     // Hash the new password
-    const hashedPassword = await bcrypt.hashSync(
-      password,
-      bcrypt.genSaltSync(20),
-    );
+    const hashedPassword = bcrypt.hashSync(password, 10);
 
     // Update user with new password and clear reset token fields
     user.password = hashedPassword;
