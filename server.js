@@ -8,19 +8,21 @@ app.use(express.json());
 
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://vint-edge.vercel.app"
+  "https://vint-edge.vercel.app",
 ];
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  }),
+);
 
 const connectDB = require("./config/dbConnection");
 connectDB();
@@ -43,7 +45,7 @@ const cartRoutes = require("./routes/cart");
 app.use("/cart", cartRoutes);
 
 app.get("/", (req, res) => {
-  res.send("Hello World!");
+  res.send("Backend API is running!");
 });
 
 app.listen(port, () => {
