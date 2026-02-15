@@ -4,6 +4,7 @@ const {
   registerUser,
   loginUser,
   verifyEmail,
+  resendVerification,
   viewProfile,
   deleteMyAccount,
   updateProfile,
@@ -24,6 +25,7 @@ router.post('/register', registerUser)
 
 // Email Verification
 router.get('/verify-email', verifyEmail); 
+router.post('/resend-verification', resendVerification);
 
 // Login user
 router.post('/login', loginUser)

@@ -98,6 +98,51 @@ const verifyEmail = async (req, res) => {
   }
 };
 
+const resendVerification = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res
+        .status(200)
+        .json({ message: "If that email exists, a verification link was sent" });
+    }
+
+    if (user.isVerified) {
+      return res.status(200).json({ message: "Email is already verified" });
+    }
+
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    user.verificationToken = verificationToken;
+    user.verificationTokenExpires = Date.now() + 1000 * 60 * 60; // 1 hour
+    await user.save();
+
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const verifyLink = `${frontendUrl}/verify-email?token=${verificationToken}`;
+
+    await sendEmail(
+      user.email,
+      "Verify your email",
+      `
+        <h3>Verify your email</h3>
+        <p>Click the link below to verify your email:</p>
+        <a href="${verifyLink}">Verify Email</a>
+      `,
+    );
+
+    return res
+      .status(200)
+      .json({ message: "Verification email sent. Please check your inbox." });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
@@ -193,6 +238,7 @@ module.exports = {
   registerUser,
   loginUser,
   verifyEmail,
+  resendVerification,
   viewProfile,
   deleteMyAccount,
   updateProfile,
