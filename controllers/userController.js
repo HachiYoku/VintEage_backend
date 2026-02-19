@@ -49,7 +49,7 @@ const registerUser = async (req, res) => {
       console.warn("Email failed but user registered:", emailError.message);
     }
 
-    // 4️⃣ Always return success
+    //  return success
     return res.status(201).json({
       message: "Registration successful. Please verify your email.",
     });

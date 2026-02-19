@@ -32,6 +32,7 @@ const createOrder = async (req, res) => {
           product: product._id,
           quantity,
           price: product.price,
+          currency: product.currency || "MMK",
         },
       ],
       totalPrice: product.price * quantity,
@@ -39,7 +40,7 @@ const createOrder = async (req, res) => {
 
     const populatedOrder = await Order.findById(order._id).populate(
       "products.product",
-      "title price",
+      "title price currency",
     );
 
     return res.status(201).json(populatedOrder);
@@ -51,7 +52,7 @@ const createOrder = async (req, res) => {
 const getItemsIBuy = async (req, res) => {
   try {
     const orders = await Order.find({ buyer: req.user.id })
-      .populate("products.product", "title price image")
+      .populate("products.product", "title price image currency")
       .populate("seller", "username email")
       .sort({ createdAt: -1 });
 
@@ -63,7 +64,7 @@ const getItemsIBuy = async (req, res) => {
 
 const getItemsISell = async (req, res) => {
   const orders = await Order.find({ seller: req.user.id })
-    .populate("products.product", "title price image")
+    .populate("products.product", "title price image currency")
     .populate("buyer", "username email");
 
   res.json(orders);
@@ -145,6 +146,7 @@ const checkoutCart = async (req, res) => {
         image: item.product.image,
         quantity: item.quantity,
         price: item.product.price,
+        currency: item.product.currency || "MMK",
       });
     }
 
